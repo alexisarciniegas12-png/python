@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Análisis de Reservas | Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { padding-top: 80px; }
+        .navbar-nav .nav-link { display: flex; align-items: center; gap: 5px; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Inicio</a></li>
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_usuarios' %}"><i class="bi bi-people"></i> Usuarios</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link active" href="{% url 'reservas:listar_reservas' %}"><i class="bi bi-calendar-date"></i> Reservas</a></li>
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'menu:listar_menu' %}"><i class="bi bi-journal-richtext"></i> Menú</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_mesas' %}"><i class="bi bi-layout-three-columns"></i> Mesas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'pedidos:listar_pedidos' %}"><i class="bi bi-cart"></i> Pedidos</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a></li>
+                {% endif %}
+                <li class="nav-item ms-lg-2"><a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">Salir</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <h2 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow"></i> Análisis de Reservas</h2>
+            <p class="text-muted">Estadísticas de demanda y ocupación de comensales.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'reservas:listar_reservas' %}" class="btn btn-dark shadow-sm">
+                <i class=""></i> Listado Completo
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body text-center p-4">
+                    <h6 class="text-uppercase fw-bold opacity-75">Total Reservas</h6>
+                    <span class="display-4 fw-bold">{{ total_reservas }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body text-center p-4">
+                    <h6 class="text-uppercase fw-bold opacity-75">Total Comensales Anticipados</h6>
+                    <span class="display-4 fw-bold">{{ total_personas }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">Estados de Reserva</div>
+                <div class="card-body"><canvas id="chartEstado"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold">Reservas por Sede</div>
+                <div class="card-body"><canvas id="chartSede"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Se agregan comillas simples alrededor de las etiquetas para que VS Code no marque error
+    // y se asegura que el JSON sea interpretado correctamente.
+    const configChart = (id, labels, data, type, color) => {
+        new Chart(document.getElementById(id), {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{ 
+                    data: data, 
+                    backgroundColor: color, 
+                    borderRadius: 5 
+                }]
+            },
+            options: { 
+                responsive: true, 
+                plugins: { 
+                    legend: { display: type === 'pie' } 
+                },
+                scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { stepSize: 1 } } } : {}
+            }
+        });
+    };
+
+    // Renderizado de datos para Local 100 y Local 106
+    configChart(
+        'chartEstado', 
+        JSON.parse('{{ labels_estado|safe }}'), 
+        JSON.parse('{{ valores_estado|safe }}'), 
+        'pie', 
+        ['#ffc107', '#198754', '#dc3545', '#0dcaf0']
+    );
+
+    configChart(
+        'chartSede', 
+        JSON.parse('{{ labels_sede|safe }}'), 
+        JSON.parse('{{ valores_sede|safe }}'), 
+        'bar', 
+        '#0d6efd'
+    );
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

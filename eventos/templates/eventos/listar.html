@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Eventos - Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Ajuste para que el contenido no quede oculto bajo el menú fijo */
+        body { padding-top: 70px; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'pedidos:listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link active " href="{% url 'eventos:listar_eventos' %}">
+                        <i class="bi bi-calendar-event"></i> Eventos
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'venta' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+<div class="card shadow border-0 mb-4">
+<div class="card-body bg-white rounded">
+<form method="GET" action="{% url 'eventos:listar_eventos' %}" class="row g-3 align-items-end justify-content-center">
+    <div class="col-md-3">
+        <label class="form-label small fw-bold text-secondary text-uppercase">Buscar Evento</label>
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+            <input type="text" name="q_ev" class="form-control" placeholder="Nombre..." value="{{ request.GET.q_ev }}">
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label small fw-bold text-secondary text-uppercase">Fecha del Evento</label>
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
+            <input type="date" name="fecha_ev" class="form-control" value="{{ request.GET.fecha_ev }}">
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label small fw-bold text-secondary text-uppercase">Estado</label>
+        <select name="est_ev" class="form-select shadow-sm">
+            <option value="">Todos</option>
+            <option value="Disponible" {% if request.GET.est_ev == 'Disponible' %}selected{% endif %}>Disponible</option>
+            <option value="Finalizado" {% if request.GET.est_ev == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+            <option value="Cancelado" {% if request.GET.est_ev == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+            <a href="{% url 'eventos:listar_eventos' %}" class="btn btn-outline-secondary" title="Limpiar">
+                <i class="bi bi-arrow-clockwise"></i>
+            </a>
+            <a href="{% url 'eventos:exportar_eventos_pdf' %}?q_ev={{ request.GET.q_ev }}&fecha_ev={{ request.GET.fecha_ev }}&est_ev={{ request.GET.est_ev }}" class="btn btn-danger shadow-sm" title="Exportar PDF">
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+            <a href="{% url 'eventos:analisis_eventos' %}" class="btn btn-dark">
+                <i class="bi bi-bar-chart-line"></i> Análisis
+            </a>
+        </div>
+    </div>
+</form>
+</div>
+</div>
+
+    <div class="card shadow border-0 mb-5">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"> Gestión de Eventos</h4>
+            {% if request.session.usuario_rol|lower != 'cliente' %}
+            <a href="{% url 'eventos:mostrar_registro_evento' %}" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-circle"></i> Nuevo Evento
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">Num</th>
+                            <th>Evento y Descripción</th>
+                            <th>Fecha y Hora</th>
+                            <th>Valor</th>
+                            <th class="text-center">Cupos</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evento in eventos %}
+                        <tr>
+                            <td class="text-center fw-bold text-primary">#{{ evento.id_evento }}</td>
+                            <td>
+                                <span class="d-block fw-bold text-dark fs-6">{{ evento.nombre_evento }}</span>
+                                <p class="text-muted small mb-0" style="white-space: pre-wrap; max-width: 350px;">{{ evento.descripcion }}</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center mb-1 small">
+                                    <i class="bi bi-calendar3 me-2 text-primary"></i> {{ evento.fecha_evento|date:"d/m/Y" }}
+                                </div>
+                                <div class="d-flex align-items-center small">
+                                    <i class="bi bi-clock me-2 text-primary"></i> {{ evento.hora_evento|time:"H:i" }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-success fw-bold">${{ evento.valor_evento|stringformat:".2f" }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark px-3">{{ evento.cupos_disponibles }} disp.</span>
+                            </td>
+                            <td class="text-center">
+                                {% if evento.estado_evento == 'Disponible' %}
+                                    <span class="badge bg-success shadow-sm px-3">Disponible</span>
+                                {% elif evento.estado_evento == 'Finalizado' %}
+                                    <span class="badge bg-secondary shadow-sm px-3">Finalizado</span>
+                                {% else %}
+                                    <span class="badge bg-danger shadow-sm px-3">{{ evento.estado_evento }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if request.session.usuario_rol|lower == 'cliente' %}
+                                    <a href="{% url 'pre_inscribir_evento' evento.id_evento %}" class="btn btn-success btn-sm rounded-circle shadow-sm">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </a>
+                                {% else %}
+                                    <div class="btn-group shadow-sm">
+                                        <a href="{% url 'eventos:pre_editar_evento' evento.id_evento %}" class="btn btn-warning btn-sm shadow-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'eventos:eliminar_evento' evento.id_evento %}" class="btn btn-danger btn-sm shadow-sm"  onclick="return confirm('¿Seguro que desea eliminar este evento?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted bg-light">
+                                {% if request.GET.q_ev or request.GET.fecha_ev or request.GET.est_ev %}
+                                    <i class="bi bi-search fs-1 d-block mb-2"></i>
+                                    <strong class="d-block">No se encontraron eventos con los filtros aplicados.</strong>
+                                    
+                                {% else %}
+                                    <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                                    <strong class="d-block">No hay eventos programados en el sistema.</strong>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+    
+    <div class="card shadow border-0 mb-4">
+        <div class="card-body bg-white py-3">
+            <form method="GET" action="{% url 'eventos:listar_eventos' %}" class="row g-3 align-items-end justify-content-center">
+    <div class="col-md-4">
+        <label class="form-label small fw-bold text-secondary text-uppercase">Nombre del cliente</label>
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-light text-secondary"><i class="bi bi-person"></i></span>
+            <input type="text" name="q_ins" class="form-control" placeholder="Buscar cliente..." value="{{ request.GET.q_ins }}">
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label small fw-bold text-secondary text-uppercase">Estado de Pago</label>
+        <select name="est_pago" class="form-select shadow-sm">
+            <option value="">Todos </option>
+            <option value="Pagado" {% if request.GET.est_pago == 'Pagado' %}selected{% endif %}>Pagado</option>
+            <option value="Pendiente" {% if request.GET.est_pago == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Cancelado" {% if request.GET.est_pago == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+    </div>
+
+    <div class="col-md-5">
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+            <a href="{% url 'eventos:listar_eventos' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                <i class="bi bi-arrow-clockwise"></i>
+            </a>
+            <a href="{% url 'eventos:url_reporte_general_eventos' %}?q_ev={{ request.GET.q_ev }}&fecha_ev={{ request.GET.fecha_ev }}&est_ev={{ request.GET.est_ev }}" class="btn btn-danger shadow-sm" title="Exportar PDF">
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+            <a href="{% url 'eventos:analisis_inscripciones' %}" class="btn btn-dark">
+                <i class="bi bi-bar-chart-line"></i> Análisis
+            </a>
+        </div>
+    </div>
+</form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Control de Usuarios Inscritos</h4>
+            <a href="{% url 'eventos:mostrar_registro_admin' %}" class="btn btn-light btn-sm shadow-sm">
+                <i class="bi bi-calendar-event"></i> Registrar Evento
+            </a>
+        </div>
+        
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">ID</th>
+                            <th>Nombre del Cliente</th>
+                            <th>Evento</th>
+                            <th class="text-center">Personas</th> 
+                            <th class="text-center">Método Pago</th>
+                            <th class="text-center">Estado Pago</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ins in inscripciones_todas %}
+                        <tr>
+                            <td class="text-center fw-bold text-primary">#{{ ins.id_inscripcion }}</td>
+                            <td>
+                                <i class="bi bi-person-circle me-2 text-secondary"></i>
+                                {{ ins.nombre_cliente }}
+                            </td>
+                            <td>
+                                <span class="fw-bold">{{ ins.id_evento.nombre_evento }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-3">
+                                    <i class="bi bi-people-fill me-1"></i> {{ ins.cantidad_personas }}
+                                </span>
+                            </td>
+                            <td class="text-center">{{ ins.metodo_pago }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if ins.estado_pago == 'Pagado' %}bg-success{% elif ins.estado_pago == 'Pendiente' %}bg-warning text-dark{% else %}bg-danger{% endif %} px-3 shadow-sm">
+                                    {{ ins.estado_pago }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm" role="group">
+                                    {% if ins.estado_pago == 'Pagado' %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="No se puede editar un registro pagado">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    {% else %}
+                                        <a href="{% url 'eventos:pre_editar_inscripcion_admin' ins.id_inscripcion %}" class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'eventos:eliminar_inscripcion_admin' ins.id_inscripcion %}" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('¿Está seguro de eliminar este registro? El cupo se devolverá al evento.')"><i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted bg-light">
+                                {% if request.GET.q_ins or request.GET.est_pago %}
+                                    <i class="bi bi-search fs-1 d-block mb-2"></i>
+                                    <strong class="d-block">No se encontraron inscripciones con los filtros aplicados.</strong>
+                                    
+                                {% else %}
+                                    <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+                                    <strong class="d-block">No hay registros de inscripciones en el sistema.</strong>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if request.session.usuario_rol|lower == 'cliente' %}
+    <div class="mt-5">
+        <h4 class="fw-bold mb-4 text-primary border-bottom pb-2"><i class="bi bi-check2-square"></i> Mis Inscripciones</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle shadow-sm">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Evento</th>
+                        <th>Fecha Inscripción</th>
+                        <th>Método Pago</th>
+                        <th>Estado Pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ins in inscripciones %}
+                    <tr class="text-center">
+                        <td class="fw-bold text-start ps-3">{{ ins.id_evento.nombre_evento }}</td>
+                        <td>{{ ins.fecha_inscripcion|date:"d/m/Y" }}</td>
+                        <td>{{ ins.metodo_pago }}</td>
+                        <td>
+                            <span class="badge {% if ins.estado_pago == 'Pagado' %}bg-success{% elif ins.estado_pago == 'Pendiente' %}bg-warning text-dark{% else %}bg-danger{% endif %} px-3">
+                                {{ ins.estado_pago }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'eliminar_inscripcion' ins.id_inscripcion %}" class="btn btn-danger btn-sm rounded-circle" title="Cancelar Inscripción" onclick="return confirm('¿Deseas cancelar tu inscripción?')">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">No tienes inscripciones registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

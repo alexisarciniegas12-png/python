@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { size: letter; margin: 1cm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: #d32f2f; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #2c3e50; color: white; padding: 10px; font-size: 10pt; }
+        td { border-bottom: 1px solid #ddd; padding: 10px; font-size: 9pt; vertical-align: middle; }
+        .precio { color: #27ae60; font-weight: bold; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 8pt; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PARRILLA EXPRESS</h1>
+        <h3>Reporte Detallado de Reservas</h3>
+    </div>
+
+    <div class="info-reporte">
+        <strong>Fecha de generación:</strong> {{ fecha }}<br>
+        <strong>Generado por:</strong> {{ generado_por }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align: left; padding-left: 15px;">Cliente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Pax</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reservas %}
+            <tr>
+                <td style="text-align: left; padding-left: 15px;">
+                    <strong>{{ r.nombre_cliente }}</strong>
+                </td>
+                <td>{{ r.fecha|date:"d/m/Y" }}</td>
+                <td>{{ r.hora }}</td>
+                <td>{{ r.n_personas }}</td>
+                <td class="{% if r.estado|lower == 'confirmada' %}estado-confirmada{% elif r.estado|lower == 'cancelada' %}estado-cancelada{% else %}estado-pendiente{% endif %}">
+                    {{ r.estado|upper }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 30px; color: #777; font-style: italic;">
+                    No se encontraron registros para los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Parrilla Express - Sistema de Gestión de Restaurante.
+    </div>
+</body>
+</html>

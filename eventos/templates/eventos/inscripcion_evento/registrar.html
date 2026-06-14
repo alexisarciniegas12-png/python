@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscripción a Eventos - Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .event-card {
+            transition: all 0.3s ease;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .event-card:hover:not(.disabled-card) {
+            border-color: #0d6efd;
+            transform: translateY(-3px);
+        }
+        .selected-card {
+            border-color: #0d6efd !important;
+            background-color: #f0f7ff;
+        }
+        .disabled-card {
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+        .icon-box {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            font-size: 2.5rem;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link " href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_reservas' or request.resolver_match.url_name == 'mostrar_registro_reserva' or request.resolver_match.url_name == 'pre_editar_reserva' %}active{% endif %}" 
+                        href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pedidos:listar_pedidos' %}"><i class="bi bi-cart"></i> Pedidos</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square"></i> Registro de Inscripción</h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="POST" action="{% url 'eventos:registrar_inscripcion' %}" id="inscripcionForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-7 border-end">
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Nombre Completo</label>
+                                    <div class="input-group shadow-sm">
+                                        <span class="input-group-text bg-white border-primary text-primary"><i class="bi bi-person-fill"></i></span>
+                                        <input type="text" name="nombre_cliente" class="form-control border-primary bg-light" 
+                                               value="{{ request.session.usuario_nombre }}" readonly required>
+                                    </div>
+                                    <small class="text-muted">Inscripción vinculada a tu cuenta de usuario.</small>
+                                </div>
+
+                                <h5 class="text-primary fw-bold mb-3">Eventos Disponibles</h5>
+                                <div class="row row-cols-1 row-cols-md-2 g-3">
+                                    {% for evento in eventos %}
+                                    <div class="col">
+                                        <div class="card event-card h-100 shadow-sm {% if evento.cupos_disponibles <= 0 %}disabled-card opacity-75{% endif %}" 
+                                             id="card_{{ evento.id_evento }}">
+                                            
+                                            <div class="icon-box position-relative">
+                                                <i class="bi bi-calendar-event"></i>
+                                                {% if evento.cupos_disponibles <= 0 %}
+                                                    <span class="position-absolute top-50 start-50 translate-middle badge rounded-pill bg-danger shadow">AGOTADO</span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="card-body p-3">
+                                                <h6 class="fw-bold mb-2 text-center">{{ evento.nombre_evento }}</h6>
+                                                
+                                                <div class="text-center mb-2">
+                                                    <span class="text-success fw-bold d-block h5">${{ evento.valor_evento }}</span>
+                                                    <small class="text-muted d-block"><i class="bi bi-calendar3"></i> {{ evento.fecha_evento|date:"d/m/Y" }}</small>
+                                                </div>
+
+                                                <div class="text-center mb-3">
+                                                    <span class="badge {% if evento.cupos_disponibles > 0 %}bg-info text-dark{% else %}bg-secondary{% endif %} px-3" id="cupos_{{ evento.id_evento }}">
+                                                        {{ evento.cupos_disponibles }} cupos disp.
+                                                    </span>
+                                                </div>
+
+                                                <button type="button" 
+                                                    class="btn btn-sm {% if evento.cupos_disponibles > 0 %}btn-outline-primary{% else %}btn-secondary disabled{% endif %} rounded-pill w-100" 
+                                                    {% if evento.cupos_disponibles > 0 %}
+                                                        onclick="seleccionarEvento('{{ evento.id_evento }}', '{{ evento.nombre_evento|escapejs }}', '{{ evento.valor_evento }}', '{{ evento.cupos_disponibles }}')"
+                                                    {% endif %}>
+                                                    {% if evento.cupos_disponibles > 0 %}Seleccionar{% else %}Sin Cupos{% endif %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                        <div class="col-12 text-center py-4">
+                                            <p class="text-muted"><i class="bi bi-info-circle"></i> No hay eventos disponibles en este momento.</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 ps-md-4">
+                                <h5 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Resumen de Selección</h5>
+                                <div class="table-responsive bg-white rounded border shadow-sm mb-3">
+                                    <table class="table table-sm align-middle mb-0" id="tablaResumen">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Evento</th>
+                                                <th class="text-end">Precio Un.</th>
+                                                <th class="text-center">Quitar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td colspan="3" class="text-center text-muted small py-4">Ningún evento seleccionado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="p-3 bg-light rounded border shadow-sm">
+                                    <div class="mb-3" id="sectionCantidad" style="display: none;">
+                                        <label class="form-label fw-bold small">CANTIDAD DE PERSONAS</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-people"></i></span>
+                                            <input type="number" name="cantidad_personas" id="inputCantidad" 
+                                                   class="form-control border-primary" value="1" min="1" oninput="recalcularTotal()">
+                                        </div>
+                                        <small class="text-danger d-none" id="errorCupos">Supera los cupos disponibles.</small>
+                                    </div>
+
+                                    <label class="form-label fw-bold small">MÉTODO DE PAGO</label>
+                                    <select name="metodo_pago" class="form-select mb-3 border-primary" required>
+                                        <option value="" disabled selected>Seleccione un método...</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                        
+                                    </select>
+                                    
+                                    <div class="d-flex justify-content-between h5 fw-bold text-primary mb-3">
+                                        <span>TOTAL:</span>
+                                        <span id="totalDisplay">$0.00</span>
+                                    </div>
+
+                                    <input type="hidden" name="id_evento" id="input_evento_id" required>
+                                    <input type="hidden" name="estado_pago" value="Pendiente">
+
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary fw-bold py-2 shadow-sm" id="btnSubmit" disabled>
+                                            <i class="bi bi-check-circle"></i> Confirmar Inscripción
+                                        </button>
+                                        <a href="{% url 'eventos:listar_inscripciones' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Cancelar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let eventoSeleccionado = null;
+
+    function seleccionarEvento(id, nombre, precio, cupos) {
+        if (eventoSeleccionado) {
+            const prevCard = document.getElementById(`card_${eventoSeleccionado.id}`);
+            if (prevCard) prevCard.classList.remove('selected-card');
+        }
+
+        eventoSeleccionado = { id, nombre, precio: parseFloat(precio), cuposMax: parseInt(cupos) };
+        const card = document.getElementById(`card_${id}`);
+        if (card) card.classList.add('selected-card');
+        
+        // Reiniciar cantidad al cambiar de evento
+        document.getElementById('inputCantidad').value = 1;
+        document.getElementById('sectionCantidad').style.display = 'block';
+        document.getElementById('inputCantidad').max = cupos;
+        
+        actualizarInterfaz();
+    }
+
+    function recalcularTotal() {
+        if (!eventoSeleccionado) return;
+        
+        const cant = parseInt(document.getElementById('inputCantidad').value) || 0;
+        const errorMsg = document.getElementById('errorCupos');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        if (cant > eventoSeleccionado.cuposMax) {
+            errorMsg.classList.remove('d-none');
+            btnSubmit.disabled = true;
+        } else if (cant <= 0) {
+            btnSubmit.disabled = true;
+        } else {
+            errorMsg.classList.add('d-none');
+            btnSubmit.disabled = false;
+        }
+
+        const total = eventoSeleccionado.precio * cant;
+        document.getElementById('totalDisplay').innerText = `$${total.toLocaleString('es-CO', {minimumFractionDigits: 2})}`;
+    }
+
+    function actualizarInterfaz() {
+        const tbody = document.querySelector('#tablaResumen tbody');
+        const hiddenInput = document.getElementById('input_evento_id');
+
+        if (!eventoSeleccionado) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted small py-4">Ningún evento seleccionado</td></tr>';
+            document.getElementById('totalDisplay').innerText = '$0.00';
+            document.getElementById('sectionCantidad').style.display = 'none';
+            hiddenInput.value = '';
+            document.getElementById('btnSubmit').disabled = true;
+            return;
+        }
+
+        tbody.innerHTML = `
+            <tr>
+                <td class="small fw-bold px-2">${eventoSeleccionado.nombre}</td>
+                <td class="text-end">$${eventoSeleccionado.precio.toLocaleString('es-CO', {minimumFractionDigits: 2})}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-link text-danger p-0" onclick="quitarSeleccion()">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        hiddenInput.value = eventoSeleccionado.id;
+        recalcularTotal();
+    }
+
+    function quitarSeleccion() {
+        if (eventoSeleccionado) {
+            const card = document.getElementById(`card_${eventoSeleccionado.id}`);
+            if (card) card.classList.remove('selected-card');
+        }
+        eventoSeleccionado = null;
+        actualizarInterfaz();
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Pedidos - Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'pedidos:listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi bi-info-circle me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-white rounded">
+            <form method="GET" action="{% url 'pedidos:listar_pedidos' %}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary text-uppercase">Buscar por número de mesa</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="Ej: 5" value="{{ request.GET.q }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary text-uppercase">Estado del Pedido</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        <option value="Pendiente" {% if request.GET.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="Entregado" {% if request.GET.estado == 'Entregado' %}selected{% endif %}>Entregado</option>
+                        <option value="Pagado" {% if request.GET.estado == 'Pagado' %}selected{% endif %}>Pagado</option>
+                        <option value="Cancelado" {% if request.GET.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <a href="{% url 'pedidos:listar_pedidos' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                    <a href="{% url 'pedidos:exportar_pedidos_pdf' %}?q={{ request.GET.q }}&estado={{ request.GET.estado }}" class="btn btn-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                    <a href="{% url 'pedidos:analisis_pedidos' %}" class="btn btn-dark">
+                    <i class="bi bi-bar-chart-line"></i> Análisis
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Listado de Pedidos por Mesa</h4>
+            <div class="d-flex gap-2">
+                
+                <a href="{% url 'pedidos:mostrar_registro_pedido' %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Nuevo Pedido
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th style="width: 15%;">Mesa</th>
+                            <th>Fecha/Hora</th>
+                            <th>Plato Pedido</th>
+                            <th>Cant.</th>
+                            <th>Total Plato</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% regroup pedidos by id_mesa as lista_agrupada %}
+                        {% for grupo in lista_agrupada %}
+                            {% for p in grupo.list %}
+                            <tr>
+                                {% if forloop.first %}
+                                <td class="text-center bg-light fw-bold" rowspan="{{ grupo.list|length }}">
+                                    <div class="p-2">
+                                        <i class="bi bi-layout-three-columns"></i><br>
+                                        Mesa {{ grupo.grouper.numero_mesa }}
+                                    </div>
+                                    <hr class="my-2">
+                                    <a href="{% url 'pedidos:factura_mesa' grupo.grouper.id_mesa %}" class="btn btn-success btn-sm w-100 shadow-sm">
+                                        <i class="bi bi-receipt"></i> Pagar Mesa
+                                    </a>
+                                </td>
+                                {% endif %}
+
+                                <td class="text-center small">{{ p.fecha_pedido|date:"d/m/Y" }}<br>{{ p.hora_pedido|time:"H:i" }}</td>
+                                <td>{{ p.id_plato.nombre_plato }}</td>
+                                <td class="text-center">{{ p.cantidad }}</td>
+                                <td class="text-center fw-bold text-success">${{ p.total }}</td>
+                                <td class="text-center">
+                                    <span class="badge 
+                                        {% if p.estado_pedido|lower == 'pendiente' %}bg-warning text-dark
+                                        {% elif p.estado_pedido|lower == 'pagado' %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ p.estado_pedido|upper }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group shadow-sm" role="group">
+                                        {% if p.estado_pedido|lower == 'pagado' %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled style="background-color: #f8f9fa;">
+                                            <i class="bi bi-lock-fill text-muted"></i>
+                                        </button>
+                                        {% else %}
+                                        <a href="{% url 'pedidos:pre_editar_pedido' p.id_pedido %}" class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        {% endif %}
+
+                                        <a href="{% url 'pedidos:eliminar_pedido' p.id_pedido %}" 
+                                           class="btn btn-danger btn-sm" 
+                                           onclick="return confirm('¿Seguro que desea eliminar este pedido?')" 
+                                           title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted bg-light">
+                                {% if request.GET.q or request.GET.estado %}
+                                    <i class="bi bi-search fs-1 d-block mb-2"></i>
+                                    <strong>No se encontraron pedidos con los filtros aplicados.</strong>
+                                {% else %}
+                                    <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
+                                    <strong>No hay pedidos registrados en el sistema.</strong>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

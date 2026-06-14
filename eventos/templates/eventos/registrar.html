@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Evento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'pedidos:listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link active " href="{% url 'eventos:listar_eventos' %}">
+                        <i class="bi bi-calendar-event"></i> Eventos
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'venta' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-plus-circle"></i> Crear Nuevo Evento</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{% url 'eventos:registrar_evento' %}" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre del Evento</label>
+                            <input type="text" name="nombre_evento" class="form-control border-primary-subtle" placeholder="Ej: Noche de Parrilla" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <textarea name="descripcion" class="form-control border-primary-subtle" rows="2" placeholder="Breve descripción del evento" required></textarea>
+                        </div>
+
+                        <div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Fecha</label>
+        <input type="date" name="fecha_evento" id="fechaEvento" class="form-control" required>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Hora</label>
+        <select name="hora_evento" id="horaEvento" class="form-select" required>
+            <option value="" selected disabled>Seleccione hora...</option>
+        </select>
+    </div>
+</div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Valor de Inscripción</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" name="valor_evento" class="form-control" placeholder="0.00" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Cupos Disponibles</label>
+                                <input type="number" name="cupos_disponibles" class="form-control" min="1" placeholder="Ej: 30" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary fw-bold">
+                                <i class="bi bi-check-circle"></i> Guardar Evento
+                            </button>
+                            <a href="{% url 'eventos:listar_eventos' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const inputFecha = document.getElementById('fechaEvento');
+    const selectHora = document.getElementById('horaEvento');
+    
+    // --- 1. CONFIGURACIÓN DE FECHA MÍNIMA ---
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    const fechaHoyFormateada = `${yyyy}-${mm}-${dd}`;
+    
+    inputFecha.setAttribute("min", fechaHoyFormateada);
+    if (!inputFecha.value) inputFecha.value = fechaHoyFormateada;
+
+    // --- 2. FUNCIÓN DE GENERACIÓN DE HORAS CON 10H DE ANTICIPACIÓN ---
+    function actualizarHorasEvento() {
+        selectHora.innerHTML = '<option value="" selected disabled>Seleccione hora...</option>';
+        
+        const fechaSeleccionada = inputFecha.value;
+        const ahora = new Date();
+        const horaActual = ahora.getHours();
+        const minutosActuales = ahora.getMinutes();
+
+        for (let h = 12; h <= 22; h++) {
+            for (let m = 0; m < 60; m += 30) { // Intervalos de 30 min para no saturar
+                
+                if (h === 22 && m > 0) break;
+
+                // LÓGICA DE ANTICIPACIÓN: 10 HORAS
+                if (fechaSeleccionada === fechaHoyFormateada) {
+                    const horaLimite = horaActual + 10;
+                    
+                    if (h < horaLimite) continue; 
+                    if (h === horaLimite && m < minutosActuales) continue;
+                }
+
+                let hh = h.toString().padStart(2, '0');
+                let min = m.toString().padStart(2, '0');
+                let valor24 = `${hh}:${min}`;
+
+                let hora12 = h > 12 ? h - 12 : h;
+                let periodo = h >= 12 ? "PM" : "AM";
+                let textoVisible = `${hora12.toString().padStart(2, '0')}:${min} ${periodo}`;
+
+                let option = document.createElement("option");
+                option.value = valor24;
+                option.textContent = textoVisible;
+                selectHora.appendChild(option);
+            }
+        }
+
+        if (selectHora.options.length <= 1) {
+            let option = document.createElement("option");
+            option.disabled = true;
+            option.textContent = "Sin cupos hoy (Mín. 10h de anticipación)";
+            selectHora.appendChild(option);
+        }
+    }
+
+    inputFecha.addEventListener("change", actualizarHorasEvento);
+    actualizarHorasEvento();
+});
+</script>
+</body>
+</html>

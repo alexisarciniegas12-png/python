@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carga Masiva Usuarios | Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Ajuste para que el contenido no quede oculto bajo el menú fijo */
+        body {
+            padding-top: 70px;
+        }
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            border-color: #0d6efd;
+            background-color: #e9ecef;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_reservas' or request.resolver_match.url_name == 'mostrar_registro_reserva' or request.resolver_match.url_name == 'pre_editar_reserva' %}active{% endif %}" 
+                        href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pedidos:listar_pedidos' %}"><i class="bi bi-cart"></i> Pedidos</a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0"><i class="bi bi-file-earmark-excel"></i> Importación Masiva de Usuarios</h4>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    
+                    <div class="mb-5">
+                        <h5 class="fw-bold mb-4">Instrucciones para el Administrador:</h5>
+                        <div class="d-flex align-items-start mb-3">
+                            <span class="step-number">1</span>
+                            <p class="mb-0 text-muted">Prepara un archivo Excel (.xlsx) con las columnas: <strong>usuario</strong>, <strong>password</strong> y <strong>rol</strong>.</p>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <span class="step-number">2</span>
+                            <p class="mb-0 text-muted">Los roles permitidos son: <strong>administrador</strong>, <strong>empleado</strong> o <strong>cliente</strong>.</p>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <span class="step-number">3</span>
+                            <p class="mb-0 text-muted">Selecciona el archivo y haz clic en "Iniciar Procesamiento" para registrar los nuevos usuarios.
+                        </div>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" class="text-center">
+                        {% csrf_token %}
+                        <div class="upload-area p-5 mb-4">
+                            <i class="bi bi-person-plus display-1 text-primary mb-3"></i>
+                            <h5 class="mb-3">Selecciona tu archivo de Excel</h5>
+                            <input type="file" name="archivo_excel" class="form-control" accept=".xlsx, .xls" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-gear-fill"></i> Iniciar Procesamiento de Datos
+                            </button>
+                            <a href="{% url 'listar_usuarios' %}" class="btn btn-outline-secondary">Cancelar operación</a>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Asegúrese de que el nombre de usuario sea único para evitar errores en la carga.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

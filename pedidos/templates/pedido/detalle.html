@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle del Pedido - PARRILLA EXPRESS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-receipt"></i> Detalle del Pedido #{{ pedido.id_pedido }}
+            </h4>
+            <a href="{% url 'listar_pedidos' %}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Volver al Listado
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold text-uppercase">Mesa</label>
+                    <p class="fs-5"><span class="badge bg-secondary">Mesa {{ pedido.id_mesa.numero_mesa }}</span></p>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold text-uppercase">Fecha y Hora</label>
+                    <p>{{ pedido.fecha_pedido|date:"d/m/Y" }} - {{ pedido.hora_pedido|time:"H:i" }}</p>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold text-uppercase">Atendido por</label>
+                    <p><i class="bi bi-person-circle text-primary"></i> {{ pedido.id_usuario.username }}</p>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold text-uppercase">Estado del Pedido</label>
+                    <p>
+                        <span class="badge 
+                            {% if pedido.estado_pedido == 'Pendiente' %}bg-warning text-dark
+                            {% elif pedido.estado_pedido == 'Entregado' %}bg-success
+                            {% else %}bg-info{% endif %}">
+                            {{ pedido.estado_pedido|upper }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-striped align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Plato / Producto</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in pedido.detalles.all %}
+                        <tr>
+                            <td class="fw-bold">{{ d.id_plato.nombre_plato }}</td>
+                            <td class="text-center">${{ d.precio_unitario }}</td>
+                            <td class="text-center">{{ d.cantidad }}</td>
+                            <td class="text-center fw-bold text-primary">${{ d.subtotal }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="text-center">
+                            <td colspan="3" class="text-end fw-bold fs-5">TOTAL DEL PEDIDO:</td>
+                            <td class="fw-bold fs-5 text-success">${{ pedido.total }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="mt-4 text-center">
+                <button onclick="window.print();" class="btn btn-dark shadow-sm">
+                    <i class="bi bi-printer"></i> Imprimir Comprobante
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

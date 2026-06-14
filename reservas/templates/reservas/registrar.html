@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Reserva | Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-cliente-premium { border-radius: 25px; border: none; overflow: hidden; background: #ffffff; }
+        .header-azul-moderno { background: linear-gradient(135deg, #0d6efd, #003d99); color: white; padding: 2.5rem 1rem; }
+        .btn-azul-moderno { background: #0d6efd; color: white; border: none; padding: 12px; transition: all 0.3s ease; }
+        .btn-azul-moderno:hover { background: #0052cc; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3); }
+        .input-group-azul .input-group-text { background-color: #f8f9fa; color: #0d6efd; }
+        .label-azul { color: #003d99; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; display: block; }
+        .plato-card { transition: all 0.2s ease; cursor: pointer; border: 1px solid #eee; }
+        .plato-card:hover { border-color: #0d6efd; background-color: #f0f7ff; }
+        .resumen-pago { background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 15px; }
+        /* Estilo para aviso de anticipación */
+        .aviso-anticipacion { font-size: 0.75rem; color: #6c757d; margin-top: 4px; display: block; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Inicio</a></li>
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_usuarios' %}"><i class="bi bi-people"></i> Usuarios</a></li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'reservas:listar_reservas' %}"><i class="bi bi-calendar-date"></i> Reservas</a>
+                </li>
+                {% if request.session.usuario_rol|lower == 'cliente' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'eventos:listar_inscripciones' %}"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+                {% endif %}
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'menu:listar_menu' %}"><i class="bi bi-journal-richtext"></i> Menú</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_mesas' %}"><i class="bi bi-layout-three-columns"></i> Mesas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'pedidos:listar_pedidos' %}"><i class="bi bi-cart"></i> Pedidos</a></li>
+                {% endif %}
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a></li>
+                {% endif %}
+                <li class="nav-item ms-lg-3"><a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg card-cliente-premium">
+                <div class="header-azul-moderno text-center">
+                    <i class="bi bi-calendar-check-fill fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0">Reserva tu Experiencia</h3>
+                    <p class="opacity-75 small">Personaliza tu mesa y tu menú</p>
+                </div>
+
+                <div class="card-body p-4 p-lg-5">
+                    <!-- Alerta de anticipación -->
+                    <div class="alert alert-info d-flex align-items-center mb-4 py-2" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <div style="font-size: 0.85rem;">
+                            Por política de calidad, las reservas deben realizarse con al menos <strong>2 horas de anticipación</strong>.
+                        </div>
+                    </div>
+
+                    <form action="{% url 'reservas:registrar_reserva' %}" method="post" id="formReserva">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="label-azul text-uppercase">Titular</label>
+                            <div class="input-group input-group-azul border rounded-3">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" name="nombre_cliente" class="form-control bg-white" value="{{ request.session.usuario_nombre }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="label-azul text-uppercase">Sede</label>
+                                <select name="sede" id="selectSede" class="form-select border-primary" required>
+                                    <option value="" selected disabled>Elegir sede...</option>
+                                    <option value="Local 100">Local 100</option> 
+                                    <option value="Local 106">Local 106</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="label-azul text-uppercase">Personas</label>
+                                <input type="number" class="form-control border-primary" name="n_personas" id="inputPersonas" min="1" max="50" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="label-azul text-uppercase">Fecha</label>
+                                <input type="date" class="form-control border-primary" name="fecha" id="inputFecha" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="label-azul text-uppercase">Hora</label>
+                                <select class="form-select border-primary" name="hora" id="selectHora" required>
+                                    <option value="" selected disabled>Seleccione...</option>
+                                </select>
+                                <span class="aviso-anticipacion"><i class="bi bi-clock-history"></i> Mínimo 2 horas antes.</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="label-azul text-uppercase">¿Qué tipo de reserva deseas?</label>
+                            <select name="tipo_reserva" id="tipoReserva" class="form-select form-select-lg border-primary fw-bold" required>
+                                <option value="solo_mesa">Solo lugar (Mesa) - $10.000 COP p/p</option>
+                                <option value="mesa_menu">Mesa con Menú Especial - $5.000 COP p/p</option>
+                            </select>
+                        </div>
+
+                        <div id="seccionMenu" class="mb-4 shadow-sm p-3 rounded-4 border bg-white" style="display: none;">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-list-stars"></i> Menú Disponible</h6>
+                            <div class="row g-2">
+                                {% for plato in platos %}
+                                <div class="col-12">
+                                    <label class="plato-card d-flex align-items-center p-3 rounded-3 w-100" for="plato_{{ plato.id_menu }}">
+                                        <input class="form-check-input check-plato me-3" type="checkbox" 
+                                               name="platos_seleccionados" value="{{ plato.id_menu }}" 
+                                               id="plato_{{ plato.id_menu }}" data-precio="{{ plato.precio }}">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold plato-info">{{ plato.nombre_plato }}</div>
+                                            <div class="small text-muted">{{ plato.descripcion|truncatechars:40 }}</div>
+                                        </div>
+                                        <div class="fw-bold text-success">${{ plato.precio }}</div>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="resumen-pago p-4 mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Cargo base reserva:</span>
+                                <span id="txtBase" class="fw-bold">$0</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Total en platos:</span>
+                                <span id="txtPlatos" class="fw-bold">$0</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 mb-0">Total a Pagar:</span>
+                                <span id="txtTotal" class="h3 mb-0 text-primary fw-bold">$0</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-azul-moderno btn-lg rounded-pill fw-bold">
+                                Confirmar Reserva
+                            </button>
+                            <a href="{% url 'reservas:listar_reservas' %}" class="btn btn-link text-secondary text-decoration-none small">
+                                Cancelar y volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tipoReserva = document.getElementById('tipoReserva');
+        const seccionMenu = document.getElementById('seccionMenu');
+        const inputPersonas = document.getElementById('inputPersonas');
+        const inputFecha = document.getElementById('inputFecha');
+        const selectHora = document.getElementById('selectHora');
+        const selectSede = document.getElementById('selectSede');
+        const checksPlatos = document.querySelectorAll('.check-plato');
+        const ocupacionTotal = JSON.parse('{{ ocupacion_json|safe|default:"{}" }}');
+
+        function calcularPrecios() {
+            const nPersonas = parseInt(inputPersonas.value) || 0;
+            const esConMenu = tipoReserva.value === 'mesa_menu';
+            let precioBaseIndividual = esConMenu ? 5000 : 10000;
+            let totalBase = nPersonas * precioBaseIndividual;
+            
+            seccionMenu.style.display = esConMenu ? 'block' : 'none';
+            
+            let totalPlatos = 0;
+            if (esConMenu) {
+                checksPlatos.forEach(check => {
+                    if (check.checked) totalPlatos += parseFloat(check.dataset.precio);
+                });
+            } else {
+                checksPlatos.forEach(check => check.checked = false);
+            }
+
+            document.getElementById('txtBase').textContent = `$${totalBase.toLocaleString()}`;
+            document.getElementById('txtPlatos').textContent = `$${totalPlatos.toLocaleString()}`;
+            document.getElementById('txtTotal').textContent = `$${(totalBase + totalPlatos).toLocaleString()}`;
+        }
+
+        function obtenerFechaLocal() {
+            const hoy = new Date();
+            const year = hoy.getFullYear();
+            const month = String(hoy.getMonth() + 1).padStart(2, '0');
+            const day = String(hoy.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function actualizarHoras() {
+            selectHora.innerHTML = '<option value="" selected disabled>Seleccione...</option>';
+            const fechaSel = inputFecha.value;
+            const sedeSel = selectSede.value;
+            const personasNuevas = parseInt(inputPersonas.value) || 0;
+
+            if(!fechaSel || !sedeSel) return;
+
+            const ahora = new Date();
+            const hoyStr = obtenerFechaLocal();
+            
+            for (let h = 12; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    if (h === 21 && m > 0) break;
+                    
+                    let valorH = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    let llave = `${fechaSel}_${valorH}_${sedeSel}`;
+                    let ocupados = ocupacionTotal[llave] || 0;
+                    let libres = 50 - ocupados;
+
+                    let option = document.createElement("option");
+                    option.value = valorH;
+                    let textoHora = `${(h > 12 ? h-12 : h)}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+
+                    let esHoraPasada = false;
+                    if (fechaSel === hoyStr) {
+                        const horaReserva = new Date();
+                        horaReserva.setHours(h, m, 0, 0);
+                        const diferencia = horaReserva.getTime() - ahora.getTime();
+                        if (diferencia < 7200000) { 
+                            esHoraPasada = true;
+                        }
+                    }
+
+                    if (esHoraPasada) {
+                        option.disabled = true;
+                        option.textContent = `${textoHora} (No disponible)`;
+                    } else if (personasNuevas > libres) {
+                        option.disabled = true;
+                        option.textContent = `${textoHora} (No disponible)`;
+                    } else {
+                        // ✅ SOLO LA HORA, SIN CUPOS
+                        option.textContent = `${textoHora}`;
+                    }
+
+                    selectHora.appendChild(option);
+                }
+            }
+        }
+
+        // Eventos
+        tipoReserva.addEventListener('change', calcularPrecios);
+        inputPersonas.addEventListener('input', () => { calcularPrecios(); actualizarHoras(); });
+        inputFecha.addEventListener('change', actualizarHoras);
+        selectSede.addEventListener('change', actualizarHoras);
+        checksPlatos.forEach(check => check.addEventListener('change', calcularPrecios));
+
+        const hoy = obtenerFechaLocal();
+        inputFecha.setAttribute("min", hoy);
+        inputFecha.value = hoy;
+
+        calcularPrecios();
+        actualizarHoras();
+    });
+</script>
+</body>
+</html>

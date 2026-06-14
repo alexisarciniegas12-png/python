@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listar Inscripciones - Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .badge-status { min-width: 100px; }
+        .table-hover tbody tr:hover { background-color: rgba(0,0,0,.02); }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active " href="{% url 'eventos:listar_inscripciones' %}">
+                        <i class="bi bi-calendar-event"></i> Eventos
+                    </a>
+                </li>
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-white py-3">
+            <form method="GET" action="{% url 'eventos:listar_inscripciones' %}" class="row g-3 align-items-end justify-content-center">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary text-uppercase">Nombre del Evento</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q_ins" class="form-control border-start-0" 
+                               placeholder="Buscar evento..." value="{{ request.GET.q_ins }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary text-uppercase">Fecha del Evento</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
+                        <input type="date" name="fecha_filtro" class="form-control" 
+                               value="{{ request.GET.fecha_filtro }}">
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-secondary text-uppercase">Estado</label>
+                    <select name="est_pago" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Pendiente" {% if request.GET.est_pago == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="Pagado" {% if request.GET.est_pago == 'Pagado' %}selected{% endif %}>Pagado</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex gap-2">
+                    <div class="d-flex gap-2"></div>
+                    <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <a href="{% url 'eventos:listar_inscripciones' %}" class="btn btn-outline-secondary" title="Limpiar">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                    <a href="{% url 'eventos:pdf_inscripciones_busqueda' %}?q_ins={{ request.GET.q_ins }}&fecha_filtro={{ request.GET.fecha_filtro }}&est_pago={{ request.GET.est_pago }}" 
+                       class="btn btn-danger shadow-sm">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+            <h4 class="mb-0 fw-bold"><i class="bi bi-check2-square"></i> Registro de Inscripciones</h4>
+            <a href="{% url 'eventos:mostrar_registro_inscripcion' %}" class="btn btn-light btn-sm shadow-sm">
+                <i class="bi bi-calendar-event"></i> Ver Eventos
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Evento</th>
+                            <th class="text-center">Personas</th> 
+                            <th class="text-center">Fecha/Hora Evento</th> 
+                            <th class="text-center">Inscrito el</th>
+                            <th>Método de Pago</th>
+                            <th class="text-center">Estado Pago</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ins in inscripciones %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ ins.nombre_cliente }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary">{{ ins.id_evento.nombre_evento }}</div>
+                                <div class="text-muted small" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ ins.id_evento.descripcion }}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary rounded-pill px-3">{{ ins.cantidad_personas }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="small fw-bold">{{ ins.id_evento.fecha_evento|date:"d/m/Y" }}</div>
+                                <div class="text-muted small">{{ ins.id_evento.hora_evento|time:"H:i" }}</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-muted">{{ ins.fecha_inscripcion|date:"d/m/Y" }}</span>
+                            </td>
+                            <td>
+                                <span class="badge border text-dark fw-normal bg-white shadow-sm">{{ ins.metodo_pago }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if ins.estado_pago == 'Pagado' %}
+                                    <span class="badge bg-success shadow-sm px-3 badge-status">
+                                        <i class="bi bi-patch-check"></i> Pagado
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark shadow-sm px-3 badge-status">
+                                        <i class="bi bi-hourglass-split"></i> Pendiente
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    {% if ins.estado_pago == 'Pendiente' %}
+                                        <a href="{% url 'ventas:pagar_inscripcion' ins.id_inscripcion %}" class="btn btn-success btn-sm" title="Procesar Pago">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </a>
+                                        <a href="{% url 'eventos:pre_editar_inscripcion' ins.id_inscripcion %}" class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm disabled" title="Inscripción pagada">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    {% endif %}
+
+                                    <a href="{% url 'eventos:eliminar_inscripcion' ins.id_inscripcion %}" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('¿Seguro que desea eliminar esta inscripción?')"
+                                       title="Eliminar">
+                                         <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-info-circle fs-2 d-block mb-3"></i>
+                                <p class="mb-0">No se encontraron registros coincidentes.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white text-muted py-3">
+            <i class="bi bi-list-task me-1"></i> Total de registros: <strong>{{ inscripciones|length }}</strong>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

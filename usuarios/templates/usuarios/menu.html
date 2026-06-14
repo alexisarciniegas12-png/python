@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parrilla Express | Sabor a la Brasa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; scroll-behavior: smooth; }
+        .heading { font-family: 'Bebas Neue', cursive; }
+        .bg-overlay { background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.6)); }
+        .menu-dot { border-bottom: 2px dotted #4b5563; flex-grow: 1; margin: 0 10px; margin-bottom: 5px; }
+        /* Imagen del menú redondeada */
+        .menu-img { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; border: 2px solid #ea580c; }
+    </style>
+</head>
+<body class="bg-stone-900 text-white">
+
+    <nav class="flex justify-between items-center px-8 py-4 bg-black/80 backdrop-blur-md fixed w-full top-0 z-50">
+        <div class="flex-1">
+            <div class="text-2xl font-bold tracking-tighter heading text-orange-500 flex items-center gap-2">
+                <span>🔥</span> PARRILLA EXPRESS
+            </div>
+        </div>
+
+        <div class="hidden md:flex flex-1 justify-center items-center space-x-10">
+            <a href="{% url 'inicio' %}" class="text-white font-bold uppercase text-sm tracking-widest hover:text-orange-500 transition-colors">
+                Inicio
+            </a>
+            <a href="{% url 'menu' %}" class="text-white font-bold uppercase text-sm tracking-widest hover:text-orange-500 transition-colors">
+                Menú
+            </a>
+        </div>
+
+        <div class="flex-1 flex justify-end">
+            <a href="{% url 'login' %}" class="bg-orange-600 hover:bg-orange-700 text-white px-7 py-2.5 rounded-full font-bold text-sm transition-all transform hover:scale-105 shadow-lg">
+                INICIAR SESIÓN
+            </a>
+        </div>
+    </nav>
+
+    <section id="menu" class="py-24 bg-stone-100 text-stone-900">
+        <div class="max-w-5xl mx-auto px-6 pt-10">
+            <div class="text-center mb-16">
+                <h2 class="heading text-6xl text-orange-600">Nuestra Carta</h2>
+                <p class="uppercase tracking-widest text-sm font-bold text-stone-500">Hecho al carbón, servido al instante</p>
+            </div>
+
+            <div class="mb-20">
+    <h3 class="heading text-4xl mb-10 border-b-2 border-orange-500 inline-block">🥩 Platos Fuertes</h3>
+    <div class="grid md:grid-cols-1 gap-10 mt-6">
+        
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUBHenQkrjNrTM32o0ncJtDCJqNGdlDpgmrw&s" alt="Baby Beef" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Baby Beef Parrilla</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$45.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">300g de lomo tierno con papas rústicas y ensalada.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://elcaserondelafinca.com/wp-content/uploads/2021/12/punta-de-anca--scaled.jpg" alt="Punta de Anca" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Punta de Anca Premium</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$48.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Corte con capa de grasa crocante, asado lentamente.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwPQ2CYyUS6MBD-eP1dDQUShXe63H3wFDbvQ&s" alt="Churrasco" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Churrasco al Carbón</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$42.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Corte mariposa de lomo ancho con chimichurri artesanal.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbTMA1FthDcLdKMybug5XV3vUeM-hgzTKu5Q&s" alt="Costillas BBQ" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Costillas BBQ Ahumadas</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$39.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Costillas de cerdo bañadas en salsa BBQ de la casa (500g).</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://media-cdn.tripadvisor.com/media/photo-s/1a/69/c7/e9/sobrebarriga-asada.jpg" alt="Sobrebarriga" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Sobrebarriga a la Brasa</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$40.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Tierna sobrebarriga asada con un toque de sal parrillera.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzCnYLO9yYBsUrvGIVCx2jtQWVIHrAapgH0w&s" alt="Pechuga" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Pechuga Express</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$32.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Filete de pechuga de pollo (350g) marinado en finas hierbas.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQk42_RakKeawpEV3lQ4HRJCSs7MREs1KhMZg&s" alt="Lomo Cerdo" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Lomo de Cerdo al Carbón</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$35.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Medallones jugosos de cerdo seleccionados, acompañados de arepa.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuIb0IVNyukhqRMDvxegx5G0ejmWs194_ZCg&s" alt="Mixto" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Súper Mixto Express</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$55.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Res, cerdo y pollo (150g c/u) con chorizo y morcilla.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqIvY_EddgWVLKNZD3S-xTjijRkfogKFxFkA&s" alt="Hamburguesa" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Hamburguesa de la Casa</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$28.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">200g de carne de res molida en casa, queso doble crema y vegetales.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-6 group">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRE9yju1ijWSPSKnVt9lb-S3mAnbjc3R2P1Dg&s" alt="Chuleta" class="menu-img">
+            <div class="flex-grow w-full">
+                <div class="flex items-end justify-between">
+                    <span class="text-xl font-bold uppercase group-hover:text-orange-600 transition">Chuleta Parrillera</span>
+                    <div class="menu-dot"></div>
+                    <span class="text-2xl font-bold text-orange-600 heading">$34.000</span>
+                </div>
+                <p class="text-stone-500 text-sm italic">Corte de cerdo apanado o a la brasa, servido con ensalada fresca.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+            <div class="grid md:grid-cols-2 gap-16">
+                <div>
+                    <h3 class="heading text-4xl mb-8 border-b-2 border-orange-500 inline-block">🍰 Postres</h3>
+                    <div class="space-y-8">
+                        <div class="flex items-center gap-4">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbtXoBJk4GVzRzDzy2uCftf2uSqNFiwcUBdA&s" alt="Volcan" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Volcán de Chocolate</span>
+                                    <span class="text-orange-600 font-bold">$18.000</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7KlDg3RpIhTXhwjwpTWF4PPXw9u3m33Vc3w&s" alt="Cheesecake" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Cheesecake de Frutos Rojos</span>
+                                    <span class="text-orange-600 font-bold">$15.000</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://img-global.cpcdn.com/recipes/cc65e8d8060ded6b/1200x630cq80/photo.jpg" alt="Leche Asada" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Leche Asada Casera</span>
+                                    <span class="text-orange-600 font-bold">$12.000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="heading text-4xl mb-8 border-b-2 border-orange-500 inline-block">🥤 Bebidas</h3>
+                    <div class="space-y-8">
+                        <div class="flex items-center gap-4">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5YR-bclyPBZv43jnQi5Gmkx0OQM_TBREKTQ&s" alt="Limonada" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Limonada de Coco</span>
+                                    <span class="text-orange-600 font-bold">$12.000</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://snapcalorie-webflow-website.s3.us-east-2.amazonaws.com/media/food_pics_v2/medium/cherry_vanilla_italian_cream_soda.jpg" alt="Soda" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Soda Italiana de Cereza</span>
+                                    <span class="text-orange-600 font-bold">$10.000</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSjMBTsZ_ExFsCLjygT2G0OYpFPm1JMXm2lg&s" alt="Jugos" class="w-16 h-16 rounded-full object-cover border-2 border-orange-500">
+                            <div class="flex-grow">
+                                <div class="flex justify-between">
+                                    <span class="font-bold uppercase">Jugos Naturales (Agua/Leche)</span>
+                                    <span class="text-orange-600 font-bold">$8.500</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="reservas" class="bg-black py-20 text-center text-white">
+        <div class="max-w-2xl mx-auto px-6">
+            <h2 class="heading text-5xl text-orange-500 mb-6">¿Vienes a visitarnos?</h2>
+            <p class="text-stone-400 mb-10 text-lg italic underline decoration-orange-600 uppercase tracking-tighter font-bold">
+                Asegura tu mesa. No tenemos domicilios, tenemos una mesa lista para ti.
+            </p>
+            <a href="{% url 'login' %}" class="bg-orange-600 hover:bg-orange-700 text-white px-12 py-5 rounded-full font-bold text-xl transition-all shadow-2xl inline-block">
+                RESERVAR MESA 
+            </a>
+            <div class="mt-16 text-stone-600 text-sm">
+                <p>PARRILLA EXPRESS © 2026</p>
+                <p>Cl. 106 #56-08, Suba, Bogotá - Abierto Lunes a Domingos</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

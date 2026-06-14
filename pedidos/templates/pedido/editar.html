@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Pedido #{{ pedido.id_pedido }} - PARRILLA EXPRESS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-plato { transition: transform 0.2s; cursor: pointer; }
+        .card-plato:hover { transform: scale(1.02); }
+        .plato-no-disponible { filter: grayscale(1); opacity: 0.6; }
+        .scroll-menu { max-height: 75vh; overflow-y: auto; padding-right: 10px; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" 
+                        href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'pedidos:listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="container mt-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-journal-richtext"></i> Menú de Platos</h4>
+                </div>
+                <div class="card-body scroll-menu">
+                    {% for categoria in categorias %}
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 text-primary fw-bold">{{ categoria.nombre_categoria }}</h5>
+                        <div class="row g-3">
+                            {% for plato in categoria.menu_set.all %}
+                            <div class="col-md-4">
+                                <div class="card h-100 card-plato shadow-sm {% if plato.estado == 'No disponible' %}plato-no-disponible{% endif %}">
+                                    {% if plato.imagen %}
+                                        <img src="{{ plato.imagen.url }}" class="card-img-top" alt="{{ plato.nombre_plato }}" style="height: 120px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary text-white text-center py-4" style="height: 120px;"><i class="bi bi-image"></i></div>
+                                    {% endif %}
+                                    <div class="card-body p-2 text-center">
+                                        <h6 class="card-title mb-1 fw-bold small">{{ plato.nombre_plato }}</h6>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-success fw-bold small">${{ plato.precio }}</span>
+                                            {% if plato.estado == 'Disponible' %}
+                                                <button type="button" class="btn btn-primary btn-sm btn-agregar" 
+                                                        data-id="{{ plato.id_plato }}" 
+                                                        data-nombre="{{ plato.nombre_plato }}" 
+                                                        data-precio="{{ plato.precio }}">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                            {% else %}
+                                                <span class="badge bg-danger small">Agotado</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-dark text-white text-center">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Modificar Pedido #{{ pedido.id_pedido }}</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'pedidos:editar_pedido' pedido.id_pedido %}" method="POST" id="form-editar">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mesa Asignada</label>
+                            <select name="id_mesa" class="form-select" required>
+                                {% for mesa in mesas %}
+                                    <option value="{{ mesa.id_mesa }}" {% if mesa.id_mesa == pedido.id_mesa.id_mesa %}selected{% endif %}>
+                                        Mesa {{ mesa.numero_mesa }} 
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Estado del Pedido</label>
+                            <select name="estado_pedido" class="form-select form-select-sm">
+                                <option value="Pendiente" {% if pedido.estado_pedido == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Entregado" {% if pedido.estado_pedido == 'Entregado' %}selected{% endif %}>Entregado</option>
+                                <option value="Cancelado" {% if pedido.estado_pedido == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr class="small text-center">
+                                        <th class="text-start">Plato</th>
+                                        <th style="width: 70px;">Cant.</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-platos">
+                                    <tr class="small text-center" id="fila-pedido">
+                                        <td class="text-start" id="nombre-plato-td">
+                                            {{ pedido.id_plato.nombre_plato }}
+                                            <input type="hidden" name="id_plato" id="input-plato-id" value="{{ pedido.id_plato.id_plato }}">
+                                        </td>
+                                        <td>
+                                            <input type="number" name="cantidad" id="input-cantidad" 
+                                                   class="form-control form-control-sm text-center" 
+                                                   value="{{ pedido.cantidad }}" min="1" 
+                                                   onchange="recalcularTotal()">
+                                        </td>
+                                        <td class="fw-bold" id="td-subtotal">${{ pedido.total }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="fw-bold">TOTAL:</h5>
+                            <h5 class="text-success fw-bold" id="total-pedido">${{ pedido.total }}</h5>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 mt-3 shadow fw-bold">
+                            <i class="bi bi-check-circle"></i> Guardar Cambios
+                        </button>
+                        <a href="{% url 'pedidos:listar_pedidos' %}" class="btn btn-danger w-100 mt-2 shadow fw-bold">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="data-precios" data-precio-inicial="{{ pedido.id_plato.precio }}" style="display:none;"></div>
+
+<script>
+    // Obtenemos el precio del div oculto para evitar errores de sintaxis en el editor
+    const dataDiv = document.getElementById('data-precios');
+    let precioPlatoActual = parseFloat(dataDiv.getAttribute('data-precio-inicial'));
+
+    function recalcularTotal() {
+        const cant = parseInt(document.getElementById('input-cantidad').value) || 1;
+        const total = precioPlatoActual * cant;
+        
+        // Formateo de moneda colombiana
+        const displayTotal = `$${total.toLocaleString('es-CO', {minimumFractionDigits: 0})}`;
+        document.getElementById('td-subtotal').innerText = displayTotal;
+        document.getElementById('total-pedido').innerText = displayTotal;
+    }
+
+    // Evento para cambiar de plato desde el menú
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-agregar');
+        if (btn) {
+            const id = btn.getAttribute('data-id');
+            const nombre = btn.getAttribute('data-nombre');
+            const precio = parseFloat(btn.getAttribute('data-precio'));
+
+            // Actualizar variables y campos ocultos
+            precioPlatoActual = precio;
+            document.getElementById('input-plato-id').value = id;
+            
+            // Actualizar el texto del plato en la tabla
+            document.getElementById('nombre-plato-td').innerHTML = `
+                ${nombre}
+                <input type="hidden" name="id_plato" id="input-plato-id" value="${id}">
+            `;
+            
+            recalcularTotal();
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

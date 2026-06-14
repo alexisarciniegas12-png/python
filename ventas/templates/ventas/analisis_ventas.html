@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Análisis de Ventas | PARRILLA EXPRESS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Ajuste para navbar fija */
+        body { padding-top: 70px; } 
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i> Inicio</a></li>
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_usuarios' %}"><i class="bi bi-people"></i> Usuarios</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'reservas:listar_reservas' %}"><i class="bi bi-calendar-date"></i> Reservas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'menu:listar_menu' %}"><i class="bi bi-journal-richtext"></i> Menú</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_mesas' %}"><i class="bi bi-layout-three-columns"></i> Mesas</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'pedidos:listar_pedidos' %}"><i class="bi bi-cart"></i> Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'eventos:listar_eventos' %}"><i class="bi bi-calendar-event"></i> Eventos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a></li>
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold"><i class="bi bi-cash-coin text-success"></i> Análisis de Ventas Globales</h2>
+            <p class="text-muted">Consolidado de ingresos de restaurante, eventos y reservas.</p>
+        </div>
+        <a href="{% url 'ventas:listar_ventas' %}" class="btn btn-dark shadow-sm">
+            Listado Completo
+        </a>
+    </div>
+
+    <!-- Fila de Tarjetas (Ahora con Reservas) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white p-3 text-center">
+                <h6 class="small fw-bold opacity-75 text-uppercase">Ingresos Totales</h6>
+                <span class="h2 fw-bold">${{ total_recaudado|stringformat:".0f" }}</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3 text-center">
+                <h6 class="small fw-bold opacity-75 text-uppercase">Ventas Restaurante</h6>
+                <span class="h2 fw-bold">${{ ventas_restaurante|stringformat:".0f" }}</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark p-3 text-center">
+                <h6 class="small fw-bold opacity-75 text-uppercase">Ventas Eventos</h6>
+                <span class="h2 fw-bold">${{ ventas_evento|stringformat:".0f" }}</span>
+            </div>
+        </div>
+        <!-- Nueva Tarjeta de Reservas -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-white p-3 text-center" style="background-color: #198754;">
+                <h6 class="small fw-bold opacity-75 text-uppercase">Ventas Reservas</h6>
+                <span class="h2 fw-bold">${{ ventas_reserva|stringformat:".0f"|default:"0" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-7">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-white fw-bold border-0 pt-3">
+                    <i class="bi bi-bar-chart-line text-primary"></i> Comparativa por Categoría
+                </div>
+                <div class="card-body">
+                    <canvas id="chartIngresos"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-white fw-bold border-0 pt-3">
+                    <i class="bi bi-pie-chart text-success"></i> Distribución por Método de Pago
+                </div>
+                <div class="card-body d-flex align-items-center">
+                    <canvas id="chartMetodos"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuración Gráfica de Barras Actualizada (Incluye Reservas)
+    new Chart(document.getElementById('chartIngresos'), {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ labels_ingresos|safe }}'),
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: JSON.parse('{{ valores_ingresos|safe }}'),
+                backgroundColor: ['#0d6efd', '#ffc107', '#198754'], // Azul (Rest), Amarillo (Evt), Verde (Res)
+                borderRadius: 8
+            }]
+        },
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Configuración Gráfica de Dona (Métodos de Pago)
+    new Chart(document.getElementById('chartMetodos'), {
+        type: 'doughnut',
+        data: {
+            labels: JSON.parse('{{ labels_pago|safe }}'),
+            datasets: [{
+                data: JSON.parse('{{ valores_pago|safe }}'),
+                backgroundColor: ['#198754', '#0dcaf0', '#0d6efd'] 
+            }]
+        },
+        options: { 
+            plugins: { legend: { position: 'bottom' } },
+            responsive: true,
+            cutout: '60%' 
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Evento - Parrilla Express</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-shop"></i> PARRILLA EXPRESS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-house-door"></i> Inicio
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}active{% endif %}" href="{% url 'listar_usuarios' %}">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reserva' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reservas:listar_reservas' %}">
+                        <i class="bi bi-calendar-date"></i> Reservas
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower != 'cliente' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'menu' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'menu:listar_menu' %}">
+                        <i class="bi bi-journal-richtext"></i> Menú
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'mesa' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'listar_mesas' %}">
+                        <i class="bi bi-layout-three-columns"></i> Mesas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'pedidos:listar_pedidos' %}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link active " href="{% url 'eventos:listar_eventos' %}">
+                        <i class="bi bi-calendar-event"></i> Eventos
+                    </a>
+                </li>
+
+                {% if request.session.usuario_rol|lower == 'administrador' or request.session.usuario_rol|lower == 'empleado' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'venta' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ventas:listar_ventas' %}"><i class="bi bi-cash-stack"></i> Ventas</a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item ms-lg-3">
+                    <a class="btn btn-outline-danger btn-sm mt-1" href="{% url 'logout' %}">Salir</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="container mt-5 mb-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% else %}bi-exclamation-triangle-fill{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0 fw-bold text-center">
+                        <i class="bi bi-pencil-square"></i> Editar Información del Evento
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    
+
+                    <form action="{% url 'eventos:editar_evento' %}" method="post">
+                        {% csrf_token %}
+                        
+                        <input type="hidden" name="id_evento" value="{{ evento.id_evento }}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre del Evento</label>
+                            <input type="text" name="nombre_evento" class="form-control border-primary-subtle" value="{{ evento.nombre_evento }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <textarea name="descripcion" class="form-control border-primary-subtle" rows="3" required>{{ evento.descripcion }}</textarea>
+                        </div>
+
+                        <div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Fecha</label>
+        <input type="date" name="fecha_evento" id="fechaEdicionEvento" class="form-control" value="{{ evento.fecha_evento|date:'Y-m-d' }}" required>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Hora</label>
+        <select name="hora_evento" id="horaEdicionEvento" class="form-select" data-actual="{{ evento.hora_evento|time:'H:i' }}" required>
+            <option value="" disabled>Seleccione hora...</option>
+        </select>
+    </div>
+</div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Valor ($)</label>
+                                <input type="number" 
+                                       step="0.01" 
+                                       name="valor_evento" 
+                                       class="form-control border-primary-subtle" 
+                                       value="{{ evento.valor_evento|stringformat:'.2f' }}" 
+                                       placeholder="0.00"
+                                       required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Cupos</label>
+                                <input type="number" name="cupos_disponibles" class="form-control" value="{{ evento.cupos_disponibles }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Estado</label>
+                                <select name="estado_evento" class="form-select border-primary">
+                                    <option value="Disponible" {% if evento.estado_evento == 'Disponible' %}selected{% endif %}>Disponible</option>
+                                    <option value="Finalizado" {% if evento.estado_evento == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+                                    <option value="Cancelado" {% if evento.estado_evento == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary fw-bold shadow-sm">
+                                <i class="bi bi-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'eventos:listar_eventos' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // --- 1. VALIDACIÓN DE FECHA (De hoy en adelante) ---
+    const inputFecha = document.getElementById('fechaEdicionEvento');
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    let mm = hoy.getMonth() + 1;
+    let dd = hoy.getDate();
+
+    if (dd < 10) dd = '0' + dd;
+    if (mm < 10) mm = '0' + mm;
+
+    const fechaMinima = yyyy + '-' + mm + '-' + dd;
+    inputFecha.setAttribute("min", fechaMinima);
+
+    // --- 2. GENERACIÓN DE HORARIO PM Y AUTO-SELECCIÓN ---
+    const selectHora = document.getElementById('horaEdicionEvento');
+    const horaGuardada = selectHora.getAttribute('data-actual'); // Ej: "14:30"
+    
+    // De 12 (12pm) hasta 22 (10pm)
+    for (let h = 12; h <= 22; h++) {
+        for (let m = 0; m < 60; m++) {
+            if (h === 22 && m > 0) break; // Límite 10:00 PM exactas
+
+            let hh = h.toString().padStart(2, '0');
+            let min = m.toString().padStart(2, '0');
+            let valor24 = `${hh}:${min}`;
+
+            // Formato visual para el usuario
+            let hora12 = h > 12 ? h - 12 : h;
+            let textoVisible = `${hora12.toString().padStart(2, '0')}:${min} PM`;
+
+            let option = document.createElement("option");
+            option.value = valor24;
+            option.textContent = textoVisible;
+
+            // Si esta opción coincide con la hora de la base de datos, la seleccionamos
+            if (valor24 === horaGuardada) {
+                option.selected = true;
+            }
+
+            selectHora.appendChild(option);
+        }
+    }
+});
+</script>
+</body>
+</html>
