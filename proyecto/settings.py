@@ -13,7 +13,11 @@ SECRET_KEY = 'django-insecure-lp%h@y-1b8t8xim)2+p7p(z4lc2m@8pi1a8+j6y7^g31a8vo1z
 DEBUG = True
 
 # Permitir que Railway y tu localhost puedan acceder
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'python-production-a01b.up.railway.app',
+    'localhost',
+    '127.0.0.1'
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -149,3 +153,7 @@ if 'test' in sys.argv:
             return super().setup_databases(**kwargs)
 
     TEST_RUNNER = f"{__name__}.FastTestRunner"
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://python-production-a01b.up.railway.app'
+]
