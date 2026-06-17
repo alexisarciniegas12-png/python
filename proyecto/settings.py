@@ -88,6 +88,12 @@ if os.environ.get('DATABASE_URL'):
         conn_max_age=600,
         ssl_require=True  # Supabase exige SSL obligatorio por seguridad
     )
+    
+    # Si Railway detecta DIRECT_URL, Django la usará automáticamente de soporte para el pooler
+    if os.environ.get('DIRECT_URL'):
+        DATABASES['default']['OPTIONS'] = {
+            'target_session_attrs': 'read-write',
+        }
 
 
 # Password validation
