@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 import sys
-import dj_database_url  # <-- IMPORTANTE: Librería para leer la URL de Supabase
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +12,6 @@ SECRET_KEY = 'django-insecure-lp%h@y-1b8t8xim)2+p7p(z4lc2m@8pi1a8+j6y7^g31a8vo1z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Permitir que Railway y tu localhost puedan acceder
 ALLOWED_HOSTS = [
     'python-production-a01b.up.railway.app',
     'localhost',
@@ -37,9 +36,12 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 ]
 
+# CONFIGURACIÓN CRÍTICA: Apuntar al modelo personalizado
+AUTH_USER_MODEL = 'usuarios.Usuario'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- REQUISITO PRODUCCIÓN: Para servir CSS y JS en Railway
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -67,10 +69,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'proyecto.wsgi.application'
 
-
-# =====================================================================
-# CONFIGURACIÓN DE BASE DE DATOS (HÍBRIDA LOCAL/PRODUCCIÓN)
-# =====================================================================
+# CONFIGURACIÓN DE BASE DE DATOS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -79,26 +78,16 @@ DATABASES = {
         'PASSWORD': '12345',
         'HOST': 'localhost',
         'PORT': '3307',
-        'TEST': {
-            'NAME': 'test_restaurante',
-            'MIGRATE': True,
-        },
     }
 }
 
-# Si Railway nos inyecta la variable de entorno, sobreescribimos la conexión usando Supabase
 if os.environ.get('DATABASE_URL'):
     DATABASES['default'] = dj_database_url.config(
         conn_max_age=600,
-        ssl_require=True  # Supabase exige SSL obligatorio por seguridad
+        ssl_require=True
     )
-    
-    # Si Railway detecta DIRECT_URL, Django la usará automáticamente de soporte para el pooler
     if os.environ.get('DIRECT_URL'):
-        DATABASES['default']['OPTIONS'] = {
-            'target_session_attrs': 'read-write',
-        }
-
+        DATABASES['default']['OPTIONS'] = {'target_session_attrs': 'read-write'}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -108,52 +97,21 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Almacenamiento optimizado para producción con WhiteNoise
 if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Carpeta física donde se guardarán las fotos
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-# =====================================================================
-# CONFIGURACIÓN EXCLUSIVA PARA ENTORNO DE PRUEBAS (SALTAR MIGRACIONES)
-# =====================================================================
-if 'test' in sys.argv:
-    from django.test.runner import DiscoverRunner
-    
-    class FastTestRunner(DiscoverRunner):
-        def setup_databases(self, **kwargs):
-            from django.conf import settings
-            from django.db import connections
-            
-            # 1. Ignorar por completo el historial de la carpeta 'migrations'
-            settings.MIGRATION_MODULES = {
-                app.split('.')[-1]: None 
-                for app in settings.INSTALLED_APPS
-            }
-            
-            # 2. Forzar a la base de datos a ignorar restricciones de FK en pruebas
-            connections['default'].settings_dict['OPTIONS'] = {
-                'init_command': "SET FOREIGN_KEY_CHECKS=0;"
-            }
-            
-            return super().setup_databases(**kwargs)
-
-    TEST_RUNNER = f"{__name__}.FastTestRunner"
-
+# SEGURIDAD CSRF
 CSRF_TRUSTED_ORIGINS = [
     'https://python-production-a01b.up.railway.app'
 ]
