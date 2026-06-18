@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'categoria_menu',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
