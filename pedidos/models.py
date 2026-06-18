@@ -18,7 +18,7 @@ class Pedido(models.Model):
 
     class Meta:
         db_table = 'pedido'
-        managed = False
+        managed = True
 
 class DetallePedido(models.Model):
     id_detalle = models.AutoField(primary_key=True)

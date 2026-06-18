@@ -23,7 +23,7 @@ class Menu(models.Model):
 
     class Meta:
         db_table = 'menu'
-        managed = False
+        managed = True
 
     def __str__(self):
         return self.nombre_plato
