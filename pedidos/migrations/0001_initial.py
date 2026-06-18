@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'pedido',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
