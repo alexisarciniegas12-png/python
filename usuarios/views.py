@@ -84,55 +84,53 @@ def iniciar_sesion(request):
         nombre_usu = request.POST.get('username')
         clave = request.POST.get('password')
         
-        # Django compara el hash de la BD con la clave que escribe el usuario
+        # Validar con el sistema de Django
         user = authenticate(request, username=nombre_usu, password=clave)
         
         if user is not None:
-            login(request, user) # Esto crea la sesión de forma segura
-            
-            # Guardamos el rol en la sesión si es necesario para tu lógica
-            request.session['usuario_rol'] = user.rol 
-            
-            return redirect('dashboard')
+            if user.is_active:
+                login(request, user)
+                # Mantenemos estas variables para que tu dashboard actual siga funcionando
+                request.session['usuario_id'] = user.pk
+                request.session['usuario_nombre'] = user.username
+                request.session['usuario_rol'] = user.rol
+                return redirect('dashboard')
+            else:
+                messages.error(request, "Esta cuenta está desactivada.")
         else:
-            messages.error(request, "Usuario o contraseña incorrectos")
+            messages.error(request, "Usuario o contraseña incorrectos.")
             
     return render(request, 'usuarios/login.html')
 # --- DASHBOARD (EL TABLERO) ---
 
 
 def dashboard(request):
+    # Verificación de seguridad
     if 'usuario_id' not in request.session:
         return redirect('login')
 
-    # --- 1. KPIs PRINCIPALES (TARJETAS) ---
+    # --- 1. KPIs PRINCIPALES ---
     total_usuarios = Usuario.objects.count()
     total_recaudado = Venta.objects.aggregate(Sum('total'))['total__sum'] or 0
     
     hoy = timezone.now().date()
-    # Corrección: Usamos fecha_venta según image_91c627.png
     total_ventas_hoy = Venta.objects.filter(fecha_venta=hoy).aggregate(total=Sum('total'))['total'] or 0
     
-    # Ticket Promedio (Ingresos / Total Pedidos)
     total_pedidos_count = Pedido.objects.count()
     ticket_promedio = total_recaudado / total_pedidos_count if total_pedidos_count > 0 else 0
     
     reservas_activas = Reserva.objects.filter(estado='pendiente').count()
     mesas_disponibles = Mesa.objects.filter(estado='disponible').count()
 
-    # --- 2. DISTRIBUCIÓN DE USUARIOS POR ROL (userChart) ---
-    # Corrección: Usamos 'rol' según image_873f11.png
+    # --- 2. GRÁFICOS (Datos para JSON) ---
     usuarios_por_rol = Usuario.objects.values('rol').annotate(total=Count('id_usuario'))
     labels_user = [item['rol'].capitalize() for item in usuarios_por_rol]
     valores_user = [item['total'] for item in usuarios_por_rol]
 
-    # --- 3. ESTADO DE PEDIDOS (chartEstados) ---
-    # Corrección: Usamos 'estado_pedido' según image_91bf23.png
     pedidos_est = Pedido.objects.values('estado_pedido').annotate(cantidad=Count('id_pedido'))
     labels_est = [item['estado_pedido'].upper() for item in pedidos_est]
     valores_est = [item['cantidad'] for item in pedidos_est]
 
-    # --- 4. TOP 5 PLATOS MÁS VENDIDOS (chartPlatos) ---
     platos_top = Pedido.objects.values('id_plato__nombre_plato').annotate(
         total_unidades=Sum('cantidad')
     ).order_by('-total_unidades')[:5]
@@ -147,8 +145,6 @@ def dashboard(request):
         'ticket_promedio': float(ticket_promedio),
         'reservas_activas': reservas_activas,
         'mesas_disponibles': mesas_disponibles,
-        
-        # Datos JSON para los scripts
         'labels_json': json.dumps(labels_user),
         'valores_json': json.dumps(valores_user),
         'labels_est': json.dumps(labels_est),
