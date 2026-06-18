@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from datetime import date
 from django.db.models import Sum, Q
 from decimal import Decimal
-
+from django.contrib.auth import authenticate
 # IMPORTACIONES CRÍTICAS
 from .models import Usuario
 from eventos.models import InscripcionEvento 
@@ -83,16 +83,21 @@ def iniciar_sesion(request):
     if request.method == 'POST':
         nombre_usu = request.POST.get('username')
         clave = request.POST.get('password')
-        try:
-            usuario_db = Usuario.objects.get(username=nombre_usu, password=clave)
-            request.session['usuario_id'] = usuario_db.id_usuario
-            request.session['usuario_nombre'] = usuario_db.username
-            request.session['usuario_rol'] = usuario_db.rol # Guardamos el rol (admin, empleado, cliente)
+        
+        # Django compara el hash de la BD con la clave que escribe el usuario
+        user = authenticate(request, username=nombre_usu, password=clave)
+        
+        if user is not None:
+            login(request, user) # Esto crea la sesión de forma segura
+            
+            # Guardamos el rol en la sesión si es necesario para tu lógica
+            request.session['usuario_rol'] = user.rol 
+            
             return redirect('dashboard')
-        except Usuario.DoesNotExist:
+        else:
             messages.error(request, "Usuario o contraseña incorrectos")
+            
     return render(request, 'usuarios/login.html')
-
 # --- DASHBOARD (EL TABLERO) ---
 
 
