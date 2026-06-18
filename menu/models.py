@@ -7,8 +7,7 @@ class CategoriaMenu(models.Model):
 
     class Meta:
         db_table = 'categoria_menu'
-        managed = False
-
+        managed = True
     def __str__(self):
         return self.nombre_categoria
 
