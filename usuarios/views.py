@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from datetime import date
 from django.db.models import Sum, Q
 from decimal import Decimal
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 # IMPORTACIONES CRÍTICAS
 from .models import Usuario
 from eventos.models import InscripcionEvento 
